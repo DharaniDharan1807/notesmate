@@ -1,12 +1,13 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Share2, X, Link, Users } from 'lucide-react';
+import { Search, Share2, X, Link, Users, LogOut } from 'lucide-react';
 
-const TopBar = ({ onSearch, onShare, searchQuery }) => {
+const TopBar = ({ onSearch, onShare, searchQuery, username, onLogout }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isShareToWeb, setIsShareToWeb] = useState(false);
   const [isLinkCopied, setIsLinkCopied] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // New state for user menu
   const shareModalRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   const handleSearchChange = (e) => {
     onSearch?.(e.target.value);
@@ -23,20 +24,40 @@ const TopBar = ({ onSearch, onShare, searchQuery }) => {
     });
   };
 
-  // Close modal when clicking outside
+  // Close share modal when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutsideShare = (event) => {
       if (shareModalRef.current && !shareModalRef.current.contains(event.target)) {
         setIsShareModalOpen(false);
       }
     };
     if (isShareModalOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutsideShare);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutsideShare);
     };
   }, [isShareModalOpen]);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutsideUserMenu = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutsideUserMenu);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideUserMenu);
+    };
+  }, [isUserMenuOpen]);
+
+  const handleLogoutClick = () => {
+    setIsUserMenuOpen(false);
+    onLogout?.();
+  };
 
   return (
     <div className="h-14 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-6 relative">
@@ -53,7 +74,15 @@ const TopBar = ({ onSearch, onShare, searchQuery }) => {
         </div>
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-4 relative">
+        {username && (
+          <span 
+            className="text-white text-sm cursor-pointer hover:text-purple-300 transition-colors duration-200"
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+          >
+            Welcome, {username}
+          </span>
+        )}
         <button 
           onClick={() => setIsShareModalOpen(!isShareModalOpen)}
           className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg transition-colors"
@@ -61,6 +90,22 @@ const TopBar = ({ onSearch, onShare, searchQuery }) => {
           <Share2 className="w-4 h-4 text-white" />
           <span className="text-white text-sm">Share</span>
         </button>
+
+        {/* User Menu (Logout Button) */}
+        {isUserMenuOpen && (
+          <div
+            ref={userMenuRef}
+            className="absolute top-12 right-20 w-40 bg-gray-900 text-white rounded-lg shadow-lg p-2 z-50 border border-gray-700"
+          >
+            <button
+              onClick={handleLogoutClick}
+              className="w-full flex items-center space-x-2 p-2 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Share Modal (Notion-style) */}
@@ -110,7 +155,7 @@ const TopBar = ({ onSearch, onShare, searchQuery }) => {
             <span>{isLinkCopied ? 'Copied!' : 'Copy link'}</span>
           </button>
 
-          {/* Permission Settings */}
+          {/* Permission Settings
           <div className="border-t border-gray-700 pt-4">
             <div className="flex items-center space-x-2 text-sm text-gray-200 mb-2">
               <Users className="w-4 h-4" />
@@ -130,7 +175,7 @@ const TopBar = ({ onSearch, onShare, searchQuery }) => {
                 <span className="text-gray-400">No one</span>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </div>
